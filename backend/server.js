@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const secretCode = process.env.SECRET_CODE;
 
 const port = 4000;
 const app = express();
@@ -11,6 +13,7 @@ const outDir = path.join(__dirname, "out");
 
 app.use(express.static(outDir));
 
+//hashing SHA256 algo
 function sha256(message) {
   const encoder = new TextEncoder();
   const data = encoder.encode(message);
@@ -24,9 +27,10 @@ function sha256(message) {
 app.post("/roll-dice", async (req, res) => {
   try {
     const clientSeed = req.body.clientSeed;
-    const serverSeed = "server-secret-code";
+    const serverSeed = secretCode;
     const nonce = Math.floor(Math.random() * 1000);
     const combinedString = clientSeed + serverSeed + nonce;
+
     const hash = await sha256(combinedString);
 
     const diceRoll = (parseInt(hash.substring(0, 8), 16) % 6) + 1;
@@ -34,10 +38,6 @@ app.post("/roll-dice", async (req, res) => {
   } catch (error) {
     res.json({ error: error });
   }
-});
-
-app.get("/", (req, res) => {
-  res.send("hello world");
 });
 
 app.listen(port, () => {
